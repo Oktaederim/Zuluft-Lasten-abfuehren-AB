@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lüftungslast-Rechner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="calculator-container">
+        <h1>Rechner für Heiz- & Kühllasten</h1>
+        <p>Berechnen Sie den notwendigen Volumenstrom und die Zulufttemperatur zur Abfuhr von Wärme- und Kühllasten in Räumen.</p>
+
+        <div class="input-section">
+            <h2>Raum- & Lastangaben</h2>
+            <div class="input-group">
+                <label for="roomArea">Raumfläche (m²)</label>
+                <input type="number" id="roomArea" placeholder="z.B. 25" min="1">
+            </div>
+            <div class="input-group">
+                <label for="roomHeight">Raumhöhe (m)</label>
+                <input type="number" id="roomHeight" value="2.5" step="0.1" min="2">
+            </div>
+            <div class="input-group">
+                <label for="heatingLoad">Spez. Heizlast (W/m²)</label>
+                <input type="number" id="heatingLoad" placeholder="z.B. 40" min="0">
+            </div>
+            <div class="input-group">
+                <label for="coolingLoad">Spez. Kühllast (W/m²)</label>
+                <input type="number" id="coolingLoad" placeholder="z.B. 60" min="0">
+            </div>
+             <div class="input-group">
+                <label for="roomTemp">Raumtemperatur Sollwert (°C)</label>
+                <input type="number" id="roomTemp" value="21" step="1">
+            </div>
+        </div>
+
+        <div class="results-section">
+            <h2>Ergebnisse</h2>
+            <div class="output-group">
+                <span>Gesamte Heizlast:</span>
+                <strong id="totalHeatingLoad">0 W</strong>
+            </div>
+            <div class="output-group">
+                <span>Gesamte Kühllast:</span>
+                <strong id="totalCoolingLoad">0 W</strong>
+            </div>
+             <div class="output-group recommendation">
+                <span>Empfohlener Volumenstrom (bei 2-fachem Luftwechsel):</span>
+                <strong id="recommendedVolumeFlow">0 m³/h</strong>
+            </div>
+            <hr>
+            <h3>Interaktive Anpassung</h3>
+            <div class="slider-group">
+                <label for="volumeFlowSlider">Volumenstrom (m³/h): <span id="volumeFlowValue">0</span> m³/h</label>
+                <input type="range" id="volumeFlowSlider" min="0" max="1000" step="10">
+                 <div id="flowRateInfo" class="info-box"></div>
+            </div>
+            <div class="output-group final-temps">
+                <div>
+                    <span>Erforderliche Zulufttemperatur (Heizen):</span>
+                    <strong id="supplyTempHeating" class="temp-heating">-- °C</strong>
+                    <div id="heatingHint" class="info-box"></div>
+                </div>
+                <div>
+                    <span>Erforderliche Zulufttemperatur (Kühlen):</span>
+                    <strong id="supplyTempCooling" class="temp-cooling">-- °C</strong>
+                    <div id="coolingHint" class="info-box"></div>
+                </div>
+            </div>
+        </div>
+
+        <details class="formulas-section">
+            <summary>Formeln und Grundlagen anzeigen</summary>
+            <div>
+                <h3>Berechnungsgrundlagen</h3>
+                <p>Die Berechnungen basieren auf den folgenden physikalischen Formeln und Annahmen:</p>
+                <ul>
+                    <li>
+                        <strong>Volumenstrom zur Lastabfuhr ($ \dot{V} $):</strong>
+                        Die grundlegende Formel zur Berechnung der erforderlichen Zulufttemperatur lautet:
+                        $$ \dot{Q} = \dot{m} \cdot c_p \cdot \Delta T $$
+                        Umgeformt für die Temperaturdifferenz ($ \Delta T $):
+                        $$ \Delta T = \frac{\dot{Q}}{\dot{m} \cdot c_p} $$
+                        Dabei ist:
+                        <ul>
+                            <li>$ \dot{Q} $: Heiz- oder Kühllast in Watt (W)</li>
+                            <li>$ \dot{m} $: Massenstrom der Luft in kg/s ($ \dot{m} = \dot{V} \cdot \rho $)</li>
+                            <li>$ c_p $: Spezifische Wärmekapazität von Luft (ca. 1,005 kJ/kg·K)</li>
+                            <li>$ \rho $: Dichte der Luft (ca. 1,204 kg/m³ bei 20°C)</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Vereinfachte Formel (im Rechner verwendet):</strong>
+                        Für eine schnelle Berechnung in der Praxis wird oft eine vereinfachte Formel genutzt, die $ \rho $ und $ c_p $ zu einem Faktor zusammenfasst:
+                        $$ \dot{Q} = \dot{V} \cdot 0,34 \cdot \Delta T \quad \text{(für } \dot{V} \text{ in m³/h)} $$
+                        Daraus ergibt sich die Zulufttemperatur ($ T_{Zuluft} $):
+                        <ul>
+                            <li><strong>Heizen:</strong> $ T_{Zuluft} = T_{Raum} + \frac{\dot{Q}_{Heiz}}{\dot{V} \cdot 0,34} $</li>
+                            <li><strong>Kühlen:</strong> $ T_{Zuluft} = T_{Raum} - \frac{\dot{Q}_{Kühl}}{\dot{V} \cdot 0,34} $</li>
+                        </ul>
+                    </li>
+                     <li>
+                        <strong>Normative Hinweise:</strong>
+                        <ul>
+                            <li><strong>Luftwechselrate:</strong> Die empfohlene Luftwechselrate variiert je nach Nutzung (z.B. Büros, Wohnräume). Ein 2-facher Luftwechsel pro Stunde ist ein üblicher Richtwert für eine erste Auslegung.</li>
+                            <li><strong>Spreizung ($ \Delta T $):</strong> Die Differenz zwischen Zuluft- und Raumtemperatur sollte aus Komfortgründen begrenzt werden.
+                                <ul>
+                                    <li><strong>Kühlen:</strong> Die Untertemperatur der Zuluft sollte idealerweise nicht mehr als 6-8 K betragen, um Zugerscheinungen zu vermeiden.</li>
+                                    <li><strong>Heizen:</strong> Die Übertemperatur ist weniger kritisch, sollte aber bei Quelllüftung oder niedrigen Auslässen begrenzt werden (z.B. max. 15-20 K), um eine unangenehme Schichtung warmer Luft unter der Decke zu verhindern.</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </details>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
