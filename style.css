@@ -67,10 +67,11 @@ h2 {
 label {
     font-weight: 500;
     color: #555;
+    flex: 1;
 }
 
 input[type="number"] {
-    width: 100px;
+    width: 120px;
     padding: 8px;
     border: 1px solid var(--border-color);
     border-radius: 6px;
