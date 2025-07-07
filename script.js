@@ -4,15 +4,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputs = {
         roomArea: document.getElementById('roomArea'),
         roomHeight: document.getElementById('roomHeight'),
-        heatingLoad: document.getElementById('heatingLoad'),
-        coolingLoad: document.getElementById('coolingLoad'),
+        heatingLoad: document.getElementById('heatingLoad'), // now in kW
+        coolingLoad: document.getElementById('coolingLoad'), // now in kW
         roomTemp: document.getElementById('roomTemp'),
         volumeFlowSlider: document.getElementById('volumeFlowSlider')
     };
 
     const outputs = {
-        totalHeatingLoad: document.getElementById('totalHeatingLoad'),
-        totalCoolingLoad: document.getElementById('totalCoolingLoad'),
         recommendedVolumeFlow: document.getElementById('recommendedVolumeFlow'),
         volumeFlowValue: document.getElementById('volumeFlowValue'),
         supplyTempHeating: document.getElementById('supplyTempHeating'),
@@ -26,51 +24,52 @@ document.addEventListener('DOMContentLoaded', () => {
         cp: 0.34 // Vereinfachter Faktor [Wh/(m³*K)]
     };
 
+    let state = {
+        totalHeatingLoadWatts: 0,
+        totalCoolingLoadWatts: 0
+    };
+
     function calculate() {
         // --- 1. Get and validate inputs ---
         const roomArea = parseFloat(inputs.roomArea.value) || 0;
         const roomHeight = parseFloat(inputs.roomHeight.value) || 0;
-        const specHeatingLoad = parseFloat(inputs.heatingLoad.value) || 0;
-        const specCoolingLoad = parseFloat(inputs.coolingLoad.value) || 0;
-        const roomTemp = parseFloat(inputs.roomTemp.value) || 21;
+        const heatingLoadKW = parseFloat(inputs.heatingLoad.value) || 0;
+        const coolingLoadKW = parseFloat(inputs.coolingLoad.value) || 0;
 
-        if (roomArea <= 0 || roomHeight <= 0) {
-            resetOutputs();
-            return;
+        // Store loads in Watts in the state object
+        state.totalHeatingLoadWatts = heatingLoadKW * 1000;
+        state.totalCoolingLoadWatts = coolingLoadKW * 1000;
+
+        // --- 2. Calculate recommended hygienic volume flow ---
+        if (roomArea > 0 && roomHeight > 0) {
+            const roomVolume = roomArea * roomHeight;
+            const recommendedFlow = roomVolume * 2; // Based on 2x air change rate
+            outputs.recommendedVolumeFlow.textContent = `${recommendedFlow.toFixed(0)} m³/h`;
+
+            if (isFirstCalculation()) {
+                // Set slider to recommended value on first valid input
+                inputs.volumeFlowSlider.value = recommendedFlow.toFixed(0);
+                updateSliderMax(recommendedFlow);
+            }
+        } else {
+            outputs.recommendedVolumeFlow.textContent = '0 m³/h';
         }
-
-        // --- 2. Calculate total loads and room volume ---
-        const totalHeatingLoad = roomArea * specHeatingLoad;
-        const totalCoolingLoad = roomArea * specCoolingLoad;
-        const roomVolume = roomArea * roomHeight;
-
-        outputs.totalHeatingLoad.textContent = `${totalHeatingLoad.toFixed(0)} W`;
-        outputs.totalCoolingLoad.textContent = `${totalCoolingLoad.toFixed(0)} W`;
         
-        // --- 3. Calculate recommended volume flow (based on 2x air change rate) ---
-        const recommendedFlow = roomVolume * 2;
-        outputs.recommendedVolumeFlow.textContent = `${recommendedFlow.toFixed(0)} m³/h`;
-
-        // --- 4. Update slider and its value display ---
-        const currentVolumeFlow = parseFloat(inputs.volumeFlowSlider.value);
-        if (isFirstCalculation()) {
-            // Set slider to recommended value on first valid input
-            inputs.volumeFlowSlider.value = recommendedFlow.toFixed(0);
-            updateSliderMax(recommendedFlow);
-        }
+        // --- 3. Update displays and calculate temperatures ---
         updateVolumeFlowDisplay();
-        
-        // --- 5. Calculate and display supply air temperatures ---
         calculateAndDisplayTemps();
     }
     
     function isFirstCalculation() {
+        // Check if slider is at its initial default value and a recommendation has been calculated
         return inputs.volumeFlowSlider.value === "0" && outputs.recommendedVolumeFlow.textContent !== "0 m³/h";
     }
 
     function updateSliderMax(recommendedFlow) {
         // Adjust slider max range to be useful, e.g., 3x the recommended value
-        const newMax = Math.max(1000, Math.ceil(recommendedFlow * 3 / 100) * 100);
+        // or a sensible default if there are high loads
+        const loadBasedFlow = Math.max(state.totalHeatingLoadWatts, state.totalCoolingLoadWatts) / (airProperties.cp * 8); // Estimate flow for 8K deltaT
+        const newMax = Math.max(1000, Math.ceil(Math.max(recommendedFlow, loadBasedFlow) * 2 / 100) * 100);
         inputs.volumeFlowSlider.max = newMax;
     }
 
@@ -78,20 +77,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const volumeFlow = parseFloat(inputs.volumeFlowSlider.value);
         outputs.volumeFlowValue.textContent = volumeFlow;
 
-        const roomVolume = (parseFloat(inputs.roomArea.value) || 0) * (parseFloat(inputs.roomHeight.value) || 0);
+        const roomArea = parseFloat(inputs.roomArea.value) || 0;
+        const roomHeight = parseFloat(inputs.roomHeight.value) || 0;
+        const roomVolume = roomArea * roomHeight;
+
         if (roomVolume > 0) {
             const airChangeRate = volumeFlow / roomVolume;
             outputs.flowRateInfo.textContent = `Das entspricht einer Luftwechselrate von ${airChangeRate.toFixed(2)} 1/h.`;
             outputs.flowRateInfo.className = 'info-box visible';
         } else {
-            outputs.flowRateInfo.textContent = '';
             outputs.flowRateInfo.className = 'info-box';
+            outputs.flowRateInfo.textContent = '';
         }
     }
 
     function calculateAndDisplayTemps() {
-        const totalHeatingLoad = parseFloat(outputs.totalHeatingLoad.textContent) || 0;
-        const totalCoolingLoad = parseFloat(outputs.totalCoolingLoad.textContent) || 0;
         const volumeFlow = parseFloat(inputs.volumeFlowSlider.value);
         const roomTemp = parseFloat(inputs.roomTemp.value) || 21;
 
@@ -105,13 +105,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // --- HEATING ---
-        if (totalHeatingLoad > 0) {
-            const deltaT_heating = totalHeatingLoad / (volumeFlow * airProperties.cp);
+        if (state.totalHeatingLoadWatts > 0) {
+            const deltaT_heating = state.totalHeatingLoadWatts / (volumeFlow * airProperties.cp);
             const tempHeating = roomTemp + deltaT_heating;
             outputs.supplyTempHeating.textContent = `${tempHeating.toFixed(1)} °C`;
             // Add comfort hints
             if (deltaT_heating > 20) {
-                showHint(outputs.heatingHint, 'KRITISCH: Sehr hohe Übertemperatur. Gefahr von starker Luftschichtung unter der Decke.', 'critical');
+                showHint(outputs.heatingHint, 'KRITISCH: Sehr hohe Übertemperatur. Gefahr von starker Luftschichtung.', 'critical');
             } else if (deltaT_heating > 15) {
                  showHint(outputs.heatingHint, 'HINWEIS: Hohe Übertemperatur. Komfort kann beeinträchtigt sein.', 'warning');
             }
@@ -120,8 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // --- COOLING ---
-        if (totalCoolingLoad > 0) {
-            const deltaT_cooling = totalCoolingLoad / (volumeFlow * airProperties.cp);
+        if (state.totalCoolingLoadWatts > 0) {
+            const deltaT_cooling = state.totalCoolingLoadWatts / (volumeFlow * airProperties.cp);
             const tempCooling = roomTemp - deltaT_cooling;
             outputs.supplyTempCooling.textContent = `${tempCooling.toFixed(1)} °C`;
             // Add comfort hints
@@ -143,18 +143,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function clearHints() {
         outputs.heatingHint.className = 'info-box';
         outputs.coolingHint.className = 'info-box';
-    }
-
-    function resetOutputs() {
-        outputs.totalHeatingLoad.textContent = '0 W';
-        outputs.totalCoolingLoad.textContent = '0 W';
-        outputs.recommendedVolumeFlow.textContent = '0 m³/h';
-        inputs.volumeFlowSlider.value = 0;
-        outputs.volumeFlowValue.textContent = '0';
-        outputs.supplyTempHeating.textContent = '-- °C';
-        outputs.supplyTempCooling.textContent = '-- °C';
-        outputs.flowRateInfo.className = 'info-box';
-        clearHints();
     }
 
     // --- Event Listeners ---
