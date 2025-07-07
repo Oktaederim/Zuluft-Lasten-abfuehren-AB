@@ -1,0 +1,187 @@
+:root {
+    --primary-color: #005A9C;
+    --secondary-color: #EAEFF3;
+    --font-color: #333;
+    --border-color: #D1D5DB;
+    --heating-color: #D9534F;
+    --cooling-color: #428BCA;
+    --warning-color: #F0AD4E;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f4f7fa;
+    color: var(--font-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    margin: 0;
+}
+
+.calculator-container {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 700px;
+}
+
+h1 {
+    color: var(--primary-color);
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+h2 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--secondary-color);
+    padding-bottom: 10px;
+    margin-top: 20px;
+}
+
+.calculator-container > p {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.input-section, .results-section {
+    margin-bottom: 20px;
+}
+
+.input-group, .output-group {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--secondary-color);
+}
+
+.input-group:last-child, .output-group:last-child {
+    border-bottom: none;
+}
+
+label {
+    font-weight: 500;
+    color: #555;
+}
+
+input[type="number"] {
+    width: 100px;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    text-align: right;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+input[type="number"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.output-group strong {
+    font-size: 1.2rem;
+}
+
+.recommendation strong {
+    color: var(--primary-color);
+}
+
+.slider-group {
+    padding: 20px 0;
+}
+
+#volumeFlowSlider {
+    width: 100%;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+.final-temps {
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+    padding-top: 20px;
+}
+
+.final-temps > div {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.final-temps strong {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+.temp-heating {
+    color: var(--heating-color);
+}
+
+.temp-cooling {
+    color: var(--cooling-color);
+}
+
+.info-box {
+    font-size: 0.85rem;
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 5px;
+    text-align: center;
+    min-height: 20px;
+    visibility: hidden; /* Hide by default */
+}
+
+.info-box.visible {
+    visibility: visible;
+}
+
+.info-box.warning {
+    background-color: #FFF3CD;
+    color: #856404;
+}
+
+.info-box.critical {
+    background-color: #F8D7DA;
+    color: #721C24;
+}
+
+.formulas-section {
+    margin-top: 30px;
+    border-top: 2px solid var(--secondary-color);
+    padding-top: 20px;
+}
+
+.formulas-section summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: var(--primary-color);
+    font-size: 1.1rem;
+}
+
+.formulas-section div {
+    margin-top: 15px;
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.formulas-section ul {
+    padding-left: 20px;
+}
+.formulas-section li {
+    margin-bottom: 10px;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--secondary-color);
+    margin: 20px 0;
+}
